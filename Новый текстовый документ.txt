@@ -1,0 +1,12 @@
+#копирование окружения.
+python -m venv venv
+
+#активация среды.
+venv\Scripts\activate
+
+#установка библиотеки в окружение.
+pip install aiogram
+
+
+set HTTP_PROXY= 10.22.1.135:3128
+set HTTPS_PROXY= 10.22.1.135:3128
