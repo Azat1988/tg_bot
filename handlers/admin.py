@@ -5,6 +5,7 @@ from aiogram import types, Dispatcher
 from create_bot import dp, bot
 from db import sqlite_db
 from keyboards import kb_admin
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 ID = None
 
@@ -19,6 +20,7 @@ class FSMAdmin(StatesGroup):
 async def make_changes_command (message : types.Message):
 	global ID
 	ID = message.from_user.id
+	await message.answer('Что нужно хозяин???')
 	await bot.send_message(message.from_user.id, 'Что нужно хозяин???', reply_markup=kb_admin)
 	await message.delete()
 	
@@ -73,7 +75,22 @@ async def load_price(message: types.Message, state: FSMContext):
 	#	await message.reply(str(data))
 	await sqlite_db.sql_add_command(state)
 	await state.finish()
-	
+
+
+@dp.callback_query_handler(lambda x: x.data and x.data.startswith('del '))
+async def del_callback_run(callback_query: types.CallbackQuery):
+	await sqlite_db.sql_delete_command(callback_query.data.replace('del ', ''))
+	await callback_query.answer(text=f'{callback_query.data.replace("del ", "")} delete', show_alert=True)
+
+
+@dp.message_handler(commands='Удалить')
+async def delete_item(message: types.Message):
+	if message.from_user.id ==ID:
+		read = await sqlite_db.sql_read2()
+		for ret in read:
+			await bot.send_photo(message.from_user.id, ret[0], f'{ret[1]}\nОписание: {ret[2]}\nЦена: {ret[3]}')
+			await bot.send_message(message.from_user.id, text='^^^', reply_markup=InlineKeyboardMarkup().\
+								   add(InlineKeyboardButton(f'Delete {ret[1]}', callback_data=f'del {ret[1]}')))
 
 	
 def register_handlers_admin(dp : Dispatcher):
